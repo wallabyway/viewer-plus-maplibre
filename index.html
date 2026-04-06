@@ -32,9 +32,18 @@
       min-width: 200px;
     }
     #status {
-      margin-left: auto;
       font-size: 12px;
       color: #888;
+    }
+    .toolbar-link {
+      color: #4dabf7;
+      text-decoration: underline;
+      font-size: 13px;
+    }
+    .toolbar-links {
+      margin-left: auto;
+      display: flex;
+      gap: 16px;
     }
     #lmv-hidden {
       position: absolute;
@@ -57,6 +66,10 @@
       <option value="">Loading models...</option>
     </select>
     <span id="status"></span>
+    <span class="toolbar-links">
+      <a class="toolbar-link" href="https://aps.autodesk.com/blog/putting-revit-map-how-blend-aps-viewer-maplibre" target="_blank" rel="noopener">Blog Post</a>
+      <a class="toolbar-link" href="https://github.com/wallabyway/viewer-plus-maplibre" target="_blank" rel="noopener">GitHub</a>
+    </span>
   </div>
   <div id="map"></div>
   <div id="lmv-hidden"></div>

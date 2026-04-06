@@ -5,7 +5,7 @@ import {
   createViewer, loadModel, getModels
 } from './lmv-loader.mjs';
 
-const DEFAULT_URN = 'dXJuOmFkc2sub2JqZWN0czpvcy5vYmplY3Q6c2FtcGxlbW9kZWxzL1Nub3dkb24lMjBUb3dlcnMlMjBTYW1wbGUlMjBBcmNoaXRlY3R1cmFsLnJ2dA==';
+const DEFAULT_URN = 'dXJuOmFkc2sub2JqZWN0czpvcy5vYmplY3Q6c2FtcGxlbW9kZWxzL09mZmljZS5ydnQ=';
 
 const THREE = window.THREE;
 const FEET_TO_METERS = 0.3048;
@@ -83,7 +83,7 @@ async function populateDropdown() {
   if (!models.some(m => m.urn === DEFAULT_URN)) {
     const opt = document.createElement('option');
     opt.value = DEFAULT_URN;
-    opt.textContent = 'Snowdon Towers Sample Architectural (Revit)';
+    opt.textContent = 'Office.rvt';
     opt.selected = true;
     select.appendChild(opt);
   }

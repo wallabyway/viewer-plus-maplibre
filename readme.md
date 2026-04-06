@@ -2,7 +2,10 @@
 
 **What if you could drop a full BIM model onto an open-source web map — not as a glTF 3D mesh, but rendered by the actual APS Viewer engine?**
 
-![Image](https://github.com/user-attachments/assets/40415321-8288-4977-a7eb-028ea846dd79)
+![Image](https://github.com/user-attachments/assets/00ecce2d-2efd-4cb9-80f2-b015f5e5f300)
+
+![Image](https://github.com/user-attachments/assets/d603176e-a309-4192-ad85-38cd2ba7ff35)
+
 
 Three weeks ago I was at the Esri Developer Summit in Palm Springs. [George Owen](https://www.esri.com/arcgis-blog/author/gowen) took the stage to demo the [MapLibre ArcGIS Plug-in](https://registration.esri.com/flow/esri/26epcdev/deveventportal/page/detailed-agenda/session/1761020020865001l0Ts) — Esri's official bridge for bringing [ArcGIS services into MapLibre GL JS](https://developers.arcgis.com/maplibre-gl-js/) ([blog post](https://www.esri.com/arcgis-blog/products/platform/developers/new-maplibre-gl-js-plugin-for-open-source-developers)). It was compelling. Esri is investing in open-source mapping, and MapLibre's `CustomLayerInterface` is the hook that makes it possible.
 
@@ -33,8 +36,11 @@ This starts a Vite dev server on `http://localhost:5180` with a proxy to the APS
 
 The demo loads the **Snowdon Towers** Revit model from Autodesk's sample bucket and places it on a MapLibre map with 3D terrain at Brownsville, PA. Use the dropdown to switch between available models. The LMV viewer UI (toolbar, model browser, properties panel) is overlaid on the map.
 
-![Snowdon Tower cover page](docs/snowdon-tower-coverpage.png)
-![Snowdon Tower site location](docs/snowdon-tower-location-sitemap.png)
+
+![Image](https://github.com/user-attachments/assets/406f0742-fda0-44f0-9ba7-d6bb74a74b8e)
+
+![Image](https://github.com/user-attachments/assets/7f66a777-12b1-4484-bc1d-ca5220f9fdeb)
+
 
 Geo-pinned in [`main.mjs`](https://github.com/wallabyway/viewer-plus-maplibre/blob/55fcaa06413022b6920e712fad5c4f1e03911252/main.mjs#L28-L32):
 
@@ -139,3 +145,10 @@ The complete source code for this demo is in this repository. The key files:
 - [`main.mjs`](main.mjs) — MapLibre custom layer, camera sync, model loading
 - [`lmv-loader.mjs`](lmv-loader.mjs) — LMV initialization, renderer injection, transparency patches
 - [`index.html`](index.html) — Minimal UI with model picker
+
+---
+
+## Links
+
+- [Blog Post — Putting Revit on a Map](https://aps.autodesk.com/blog/putting-revit-map-how-blend-aps-viewer-maplibre)
+- [MapLibre GL JS — Display Buildings in 3D](https://maplibre.org/maplibre-gl-js/docs/examples/display-buildings-in-3d/)
