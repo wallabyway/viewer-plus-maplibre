@@ -36,6 +36,14 @@ The demo loads the **Snowdon Towers** Revit model from Autodesk's sample bucket 
 ![Snowdon Tower cover page](docs/snowdon-tower-coverpage.png)
 ![Snowdon Tower site location](docs/snowdon-tower-location-sitemap.png)
 
+Geo-pinned in [`main.mjs`](https://github.com/wallabyway/viewer-plus-maplibre/blob/55fcaa06413022b6920e712fad5c4f1e03911252/main.mjs#L28-L32):
+
+```javascript
+const modelOrigin = [-79.88666527, 40.022371938];
+const modelAltitude = 10;
+const modelRotationDeg = 30;
+```
+
 ### Requirements
 
 - Node.js 18+
