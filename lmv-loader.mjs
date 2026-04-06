@@ -1,7 +1,11 @@
-const getToken = () => fetch('/api/auth/token').then(r => r.json());
+const API_BASE = import.meta.env.DEV
+  ? '/api'
+  : 'https://aps-extensions.autodesk.io/api';
+
+const getToken = () => fetch(`${API_BASE}/auth/token`).then(r => r.json());
 
 export const getModels = () =>
-  fetch('/api/models/buckets?id=samplemodels')
+  fetch(`${API_BASE}/models/buckets?id=samplemodels`)
     .then(r => r.json())
     .then(items => items.map(m => ({ name: m.text, urn: m.id })));
 

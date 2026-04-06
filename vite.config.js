@@ -1,5 +1,5 @@
 export default {
-  base: '/',
+  base: '/viewer-plus-maplibre/',
   server: {
     open: true,
     proxy: {
