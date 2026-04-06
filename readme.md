@@ -12,11 +12,9 @@ This post describes what happened when I tried to render an Autodesk Revit model
 
 ### Live Demo
 
-> **[Try it live →](https://TODO-gh-pages-url)**
+> **[Try it live →](https://wallabyway.github.io/viewer-plus-maplibre/)**
 
-https://github.com/user-attachments/assets/placeholder
-
-https://user-images.githubusercontent.com/placeholder/lmv-with-ui.mp4
+https://github.com/user-attachments/assets/dbfd6865-26f8-41ab-8bc8-cba35ceaa133
 
 <video src="docs/lmv-with-ui.mp4" controls width="100%"></video>
 
