@@ -1,14 +1,14 @@
-# Putting a Revit Building on a MapLibre Map — By compositing with Autodesk's LMV Renderer
+# Putting Revit on a Map — Compositing APS Viewer with MapLibre
 
-**What if you could drop a full BIM model onto an open-source web map — not as a static 3D mesh, but rendered by the same engine Autodesk uses in production?**
+**What if you could drop a full BIM model onto an open-source web map — not as a glTF 3D mesh, but rendered by the actual APS Viewer engine?**
 
 ![Image](https://github.com/user-attachments/assets/40415321-8288-4977-a7eb-028ea846dd79)
 
 Three weeks ago I was at the Esri Developer Summit in Palm Springs. [George Owen](https://www.esri.com/arcgis-blog/author/gowen) took the stage to demo the [MapLibre ArcGIS Plug-in](https://registration.esri.com/flow/esri/26epcdev/deveventportal/page/detailed-agenda/session/1761020020865001l0Ts) — Esri's official bridge for bringing [ArcGIS services into MapLibre GL JS](https://developers.arcgis.com/maplibre-gl-js/) ([blog post](https://www.esri.com/arcgis-blog/products/platform/developers/new-maplibre-gl-js-plugin-for-open-source-developers)). It was compelling. Esri is investing in open-source mapping, and MapLibre's `CustomLayerInterface` is the hook that makes it possible.
 
-I walked out of that session thinking: *if Esri can inject ArcGIS into MapLibre's WebGL context, what else can we inject?*
+I walked out of that session thinking: *could MapLibre share the webGL context with APS Viewer ?*
 
-I've been exploring the intersection of BIM and GIS for a while now. An earlier experiment used [geo-three](https://github.com/nicejam/geo-three) to render Esri's World Elevation terrain tiles in a three.js scene — proof that geospatial data and 3D rendering can mix. But terrain is one thing. A full Revit building — with thousands of parametric elements, materials, and metadata — is another.
+I've been exploring BIM + GIS for a while now. Earlier I used [geo-three](https://github.com/wallabyway/geo-three-ext) to render Esri's terrain tiles into the geo-three / three.js scene. But terrain and geoThree is limited to distance and no vector tile maps or 3D buildings.
 
 This post describes what happened when I tried to render an Autodesk Revit model on a MapLibre map by making MapLibre and LMV (Autodesk's internal viewer engine) share a single WebGL context. Not a screenshot overlay. Not an iframe. **Two renderers, one canvas, one depth buffer.**
 
@@ -51,19 +51,11 @@ const modelRotationDeg = 30;
 
 ---
 
-## Why This Matters
-
-AEC (Architecture, Engineering, and Construction) firms live in two worlds. Their building models are in Autodesk Revit, Navisworks, and the APS platform. Their site context — terrain, parcels, utilities, satellite imagery — is in GIS systems, often powered by Esri. Connecting these worlds usually means exporting, converting, and losing fidelity.
-
-What if the building could render *natively* on the map, using the same renderer that powers the APS Viewer? No format conversion. No geometry extraction. The actual LMV engine, drawing into MapLibre's canvas.
-
-That's what this demo does.
-
 ## The Approach
 
 MapLibre GL JS supports custom WebGL layers through its `CustomLayerInterface`. You register a layer object with `onAdd()` and `render()` methods. Inside `render()`, you receive the raw `WebGL2RenderingContext` and MapLibre's view-projection matrix. You can draw whatever you want.
 
-The APS Viewer SDK (aka LMV) uses a modified fork of three.js revision 71 as its rendering engine. We extract LMV's constructor from a throwaway viewer instance and create a new one targeting MapLibre's canvas.
+The APS Viewer SDK (aka LMV) uses three.js revision 71 as its rendering engine. We extract LMV's constructor from a throwaway instance and create a new one targeting MapLibre's canvas.
 
 The full technique breaks down into five parts:
 
@@ -82,7 +74,7 @@ gl.useProgram(null);
 
 ### [Part 2: Bootstrapping LMV's Renderer](docs/02-renderer-bootstrapping.md)
 
-LMV's renderer class isn't on any public namespace. The trick: create a throwaway viewer, steal the constructor, destroy it:
+LMV's renderer class isn't on any public namespace. The trick: create a throwaway instance, grab the constructor, destroy it:
 
 ```javascript
 const temp = new Autodesk.Viewing.Viewer3D(div);
@@ -133,7 +125,7 @@ tick()
 
 ## The Result
 
-A Revit building rendered on a MapLibre map at Brownsville, PA. The model is geo-pinned — pan, zoom, and rotate the map and the building moves with it. MapLibre's 3D extruded buildings render alongside. The model loads from Autodesk's cloud through the standard APS document loading pipeline.
+A Revit building rendered on a MapLibre map at Brownsville, PA. The model is geo-pinned — pan, zoom, and rotate the map and the building moves with it. MapLibre's 3D extruded buildings render alongside. 
 
 The entire implementation is under 300 lines across two files (`main.mjs` and `lmv-loader.mjs`).
 
