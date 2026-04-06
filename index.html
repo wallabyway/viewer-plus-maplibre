@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MapLibre + APS Viewer (LMV) — BIM on a Map</title>
+  <link rel="stylesheet" href="https://developer.api.autodesk.com/modelderivative/v2/viewers/7.*/style.min.css">
+  <script src="https://developer.api.autodesk.com/modelderivative/v2/viewers/7.*/viewer3D.min.js"></script>
+  <style>
+    body { margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    #map { height: calc(100% - 48px); }
+    #toolbar {
+      height: 48px;
+      display: flex;
+      align-items: center;
+      padding: 0 16px;
+      gap: 12px;
+      background: #1a1a2e;
+      color: #fff;
+      font-family: system-ui, sans-serif;
+      font-size: 14px;
+    }
+    #toolbar h1 { font-size: 15px; font-weight: 600; margin: 0; }
+    #modelSelect {
+      padding: 4px 8px;
+      border-radius: 4px;
+      border: 1px solid #444;
+      background: #2a2a3e;
+      color: #fff;
+      font-size: 13px;
+      min-width: 200px;
+    }
+    #status {
+      font-size: 12px;
+      color: #888;
+    }
+    .toolbar-link {
+      color: #4dabf7;
+      text-decoration: underline;
+      font-size: 13px;
+    }
+    .toolbar-links {
+      margin-left: auto;
+      display: flex;
+      gap: 16px;
+    }
+    #lmv-hidden {
+      position: absolute;
+      top: 48px;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      pointer-events: none;
+      z-index: 10;
+    }
+    #lmv-hidden .adsk-viewing-viewer { background: transparent !important; }
+    #lmv-hidden .adsk-viewing-viewer > canvas { display: none !important; }
+    #lmv-hidden .adsk-control, #lmv-hidden .docking-panel { pointer-events: auto; }
+  </style>
+  <script type="module" crossorigin src="/viewer-plus-maplibre/assets/index-C3IM8fLl.js"></script>
+  <link rel="stylesheet" crossorigin href="/viewer-plus-maplibre/assets/index-B46vZ9Yf.css">
+</head>
+<body>
+  <div id="toolbar">
+    <h1>MapLibre + LMV</h1>
+    <select id="modelSelect">
+      <option value="">Loading models...</option>
+    </select>
+    <span id="status"></span>
+    <span class="toolbar-links">
+      <a class="toolbar-link" href="https://aps.autodesk.com/blog/putting-revit-map-how-blend-aps-viewer-maplibre" target="_blank" rel="noopener">Blog Post</a>
+      <a class="toolbar-link" href="https://github.com/wallabyway/viewer-plus-maplibre" target="_blank" rel="noopener">GitHub</a>
+    </span>
+  </div>
+  <div id="map"></div>
+  <div id="lmv-hidden"></div>
+</body>
+</html>
