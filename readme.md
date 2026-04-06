@@ -69,23 +69,65 @@ The full technique breaks down into five parts:
 
 ### [Part 1: Sharing a Single WebGL Context](docs/01-shared-webgl-context.md)
 
-Two renderers on one canvas. The WebGL state machine is global — every `bindBuffer` and `useProgram` persists until something changes it. After each renderer draws, we need a thorough state cleanup to prevent one from corrupting the other.
+Two renderers on one canvas. The WebGL state machine is global — after each renderer draws, we reset everything R71 doesn't touch:
+
+```javascript
+glr.resetGLState();
+gl.bindVertexArray(null);
+gl.bindBuffer(gl.ARRAY_BUFFER, null);
+gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
+gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+gl.useProgram(null);
+```
 
 ### [Part 2: Bootstrapping LMV's Renderer](docs/02-renderer-bootstrapping.md)
 
-The bootstrap trick: create a throwaway viewer, grab `impl.glrenderer().constructor`, destroy the throwaway. Now we can construct a renderer on the mapLibre canvas.
+LMV's renderer class isn't on any public namespace. The trick: create a throwaway viewer, steal the constructor, destroy it:
+
+```javascript
+const temp = new Autodesk.Viewing.Viewer3D(div);
+temp.start();
+const RendererClass = temp.impl.glrenderer().constructor;
+temp.finish();
+```
 
 ### [Part 3: Camera Synchronization](docs/03-camera-synchronization.md)
 
-A Revit model is in feet. MapLibre is in Web Mercator. The bridge is a matrix multiply: `vpCentered × modelTransform`, where the VP is re-centered to the camera's Mercator position and the model matrix uses a tiny relative offset instead of absolute coordinates. This **relative-to-eye (RTE)** technique keeps Float32 values small, eliminating the "swimming" precision artifacts that appear in Safari when using absolute Mercator positions. Float64 precision during composition and zeroing LMV's camera world transform every frame complete the fix.
+A Revit model is in feet, MapLibre in Mercator. The **relative-to-eye (RTE)** technique keeps Float32 precise — tiny offsets instead of absolute coordinates:
+
+```javascript
+const model64 = new Float64Array([
+   s * cosR, -s * sinR, 0, 0,
+  -s * sinR, -s * cosR, 0, 0,
+   0,         0,        s, 0,
+   dx,        dy,       dz, 1
+]);
+const result = mulMat4Float64(vpCentered, model64);
+cam.projectionMatrix.elements.set(new Float32Array(result));
+```
 
 ### [Part 4: Transparency and Compositing](docs/04-transparency-and-compositing.md)
 
-LMV renders to internal framebuffers, then blits to the canvas. By default, this overwrites MapLibre's map. Making it transparent requires clearing with alpha zero, grabbing `gl.disable(BLEND)` during the blit, and managing the depth buffer across multisampled framebuffer boundaries.
+LMV's blit overwrites the map. We intercept `gl.disable(BLEND)` to force alpha compositing during `presentBuffer`:
+
+```javascript
+const origDisable = gl.disable.bind(gl);
+gl.disable = function(cap) {
+  if (forceBlend && cap === gl.BLEND) return;
+  origDisable(cap);
+};
+```
 
 ### [Part 5: Adding 2D — AutoCAD Drawings on the Map](docs/05-adding-2d-drawings.md)
 
-It's not just 3D. LMV also renders 2D AutoCAD drawings using an MSDF/SDF shader pipeline that produces vector-sharp text and lines at any zoom. The trick is maintaining the `pixelsPerUnit` uniform that drives zoom-dependent rendering quality — a code path that our camera injection accidentally blocks.
+LMV's 2D pipeline uses MSDF/SDF shaders driven by a `pixelsPerUnit` uniform. Our `skipCameraUpdate = true` blocks the only code path that updates it:
+
+```
+tick()
+  └─ skipCameraUpdate? ──YES──> SKIPPED (no pixel scale update)
+                          NO ──> updateCameraMatrices()
+                                   └─ matman.updatePixelScale(ppu, w, h, camera)
+```
 
 ---
 
