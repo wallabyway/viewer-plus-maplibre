@@ -1,6 +1,7 @@
+const APS_API = 'https://aps-extensions.autodesk.io/api';
 const API_BASE = import.meta.env.DEV
   ? '/api'
-  : 'https://aps-extensions.autodesk.io/api';
+  : `https://corsproxy.io/?url=${encodeURIComponent(APS_API)}`;
 
 const getToken = () => fetch(`${API_BASE}/auth/token`).then(r => r.json());
 
