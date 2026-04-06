@@ -33,6 +33,9 @@ This starts a Vite dev server on `http://localhost:5180` with a proxy to the APS
 
 The demo loads the **Snowdon Towers** Revit model from Autodesk's sample bucket and places it on a MapLibre map with 3D terrain at Brownsville, PA. Use the dropdown to switch between available models. The LMV viewer UI (toolbar, model browser, properties panel) is overlaid on the map.
 
+![Snowdon Tower cover page](docs/snowdon-tower-coverpage.png)
+![Snowdon Tower site location](docs/snowdon-tower-location-sitemap.png)
+
 ### Requirements
 
 - Node.js 18+
