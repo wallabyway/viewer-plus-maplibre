@@ -16,7 +16,7 @@ This post describes what happened when I tried to render an Autodesk Revit model
 
 > **[Try it live →](https://wallabyway.github.io/viewer-plus-maplibre/)**
 
-https://github.com/user-attachments/assets/dbfd6865-26f8-41ab-8bc8-cba35ceaa133
+https://github.com/user-attachments/assets/377ce842-117e-4b36-a3ad-d8a9ed42810f
 
 
 ---
