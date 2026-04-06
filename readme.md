@@ -2,6 +2,8 @@
 
 **What if you could drop a full BIM model onto an open-source web map — not as a static 3D mesh, but rendered by the same engine Autodesk uses in production?**
 
+![Image](https://github.com/user-attachments/assets/40415321-8288-4977-a7eb-028ea846dd79)
+
 Three weeks ago I was at the Esri Developer Summit in Palm Springs. [George Owen](https://www.esri.com/arcgis-blog/author/gowen) took the stage to demo the [MapLibre ArcGIS Plug-in](https://registration.esri.com/flow/esri/26epcdev/deveventportal/page/detailed-agenda/session/1761020020865001l0Ts) — Esri's official bridge for bringing [ArcGIS services into MapLibre GL JS](https://developers.arcgis.com/maplibre-gl-js/) ([blog post](https://www.esri.com/arcgis-blog/products/platform/developers/new-maplibre-gl-js-plugin-for-open-source-developers)). It was compelling. Esri is investing in open-source mapping, and MapLibre's `CustomLayerInterface` is the hook that makes it possible.
 
 I walked out of that session thinking: *if Esri can inject ArcGIS into MapLibre's WebGL context, what else can we inject?*
@@ -16,7 +18,6 @@ This post describes what happened when I tried to render an Autodesk Revit model
 
 https://github.com/user-attachments/assets/dbfd6865-26f8-41ab-8bc8-cba35ceaa133
 
-<video src="docs/lmv-with-ui.mp4" controls width="100%"></video>
 
 ---
 
@@ -51,7 +52,7 @@ That's what this demo does.
 
 MapLibre GL JS supports custom WebGL layers through its `CustomLayerInterface`. You register a layer object with `onAdd()` and `render()` methods. Inside `render()`, you receive the raw `WebGL2RenderingContext` and MapLibre's view-projection matrix. You can draw whatever you want.
 
-The APS Viewer SDK (code-named LMV) uses a heavily modified fork of three.js revision 71 as its rendering engine. LMV doesn't expose this renderer publicly in the CDN build — but we can extract its constructor from a throwaway viewer instance and create a new one targeting MapLibre's canvas.
+The APS Viewer SDK (aka LMV) uses a modified fork of three.js revision 71 as its rendering engine. We extract LMV's constructor from a throwaway viewer instance and create a new one targeting MapLibre's canvas.
 
 The full technique breaks down into five parts:
 
@@ -61,7 +62,7 @@ Two renderers on one canvas. The WebGL state machine is global — every `bindBu
 
 ### [Part 2: Bootstrapping LMV's Renderer](docs/02-renderer-bootstrapping.md)
 
-LMV's renderer class isn't on any public namespace. The bootstrap trick: create a throwaway viewer, grab `impl.glrenderer().constructor`, destroy the throwaway. Now we can construct a renderer on any canvas we choose.
+The bootstrap trick: create a throwaway viewer, grab `impl.glrenderer().constructor`, destroy the throwaway. Now we can construct a renderer on the mapLibre canvas.
 
 ### [Part 3: Camera Synchronization](docs/03-camera-synchronization.md)
 
@@ -69,7 +70,7 @@ A Revit model is in feet. MapLibre is in Web Mercator. The bridge is a matrix mu
 
 ### [Part 4: Transparency and Compositing](docs/04-transparency-and-compositing.md)
 
-LMV renders to internal framebuffers, then blits to the canvas. By default, this overwrites MapLibre's map. Making it transparent requires clearing with alpha zero, intercepting `gl.disable(BLEND)` during the blit, and managing the depth buffer across multisampled framebuffer boundaries.
+LMV renders to internal framebuffers, then blits to the canvas. By default, this overwrites MapLibre's map. Making it transparent requires clearing with alpha zero, grabbing `gl.disable(BLEND)` during the blit, and managing the depth buffer across multisampled framebuffer boundaries.
 
 ### [Part 5: Adding 2D — AutoCAD Drawings on the Map](docs/05-adding-2d-drawings.md)
 
@@ -83,27 +84,8 @@ A Revit building rendered on a MapLibre map at Brownsville, PA. The model is geo
 
 The entire implementation is under 300 lines across two files (`main.mjs` and `lmv-loader.mjs`).
 
-## The Esri Connection
-
-This experiment wouldn't exist without [George Owen's](https://www.esri.com/arcgis-blog/author/gowen) Esri Dev Summit talk. Seeing ArcGIS layers injected into MapLibre through `CustomLayerInterface` made the architecture click. The same pattern that Esri uses for basemap tiles — registering a custom WebGL layer — works for injecting an entirely different 3D renderer.
-
-The broader vision: AEC firms already use Esri for GIS and Autodesk for BIM. If both can render natively in MapLibre, the open-source map becomes the meeting point. No proprietary viewer lock-in. No export pipelines. Just two renderers sharing a canvas.
-
-I hope this contribution is useful to the MapLibre community and helps strengthen the partnership between the AEC and geospatial ecosystems.
 
 ---
-
-## Technical Details
-
-For the full technical deep-dive, see the five-part explainer series in the [`docs/`](docs/) folder. These documents are also available as audio explainers via NotebookLM.
-
-| Part | Topic |
-|------|-------|
-| [01](docs/01-shared-webgl-context.md) | Sharing a single WebGL context between two renderers |
-| [02](docs/02-renderer-bootstrapping.md) | Bootstrapping LMV's hidden renderer class from the CDN |
-| [03](docs/03-camera-synchronization.md) | Camera sync — projecting BIM coordinates into Mercator space |
-| [04](docs/04-transparency-and-compositing.md) | Transparency, compositing, and GL state management |
-| [05](docs/05-adding-2d-drawings.md) | Adding 2D — AutoCAD drawings with MSDF/SDF zoom scaling |
 
 ## Source
 
