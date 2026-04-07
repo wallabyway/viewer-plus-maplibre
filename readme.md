@@ -116,6 +116,19 @@ gl.disable = function(cap) {
 };
 ```
 
+#### The Frame Sequence
+
+Putting it all together, each frame follows this sequence:
+
+1. MapLibre renders its base map (tiles, terrain, layers below the custom layer)
+2. Custom layer render() fires — we now own the GL context
+3. Set LMV's camera to match MapLibre's view-projection
+4. Reset GL state so LMV starts from a clean slate
+5. LMV ticks — renders to internal FBOs, then presentBuffer composites onto the canvas with forced alpha blending
+6. Reset GL state again so MapLibre can safely render layers above (3D buildings)
+7. MapLibre continues rendering its remaining layers
+
+
 ### [Part 5: Adding 2D — AutoCAD Drawings on the Map](docs/05-adding-2d-drawings.md)
 
 LMV's 2D pipeline uses MSDF/SDF shaders driven by a `pixelsPerUnit` uniform. Our `skipCameraUpdate = true` blocks the only code path that updates it:
