@@ -2,15 +2,27 @@ const API_BASE = import.meta.env.DEV
   ? '/api'
   : 'https://d1rfabreh9lcnl.cloudfront.net/api';
 
-const getToken = () => fetch(`${API_BASE}/auth/token`).then(r => r.json());
+const fetchAccessToken = () => fetch(`${API_BASE}/auth/token`).then(r => r.json());
 
-export const getModels = () =>
+export const fetchModelCatalog = () =>
   fetch(`${API_BASE}/models/buckets?id=samplemodels`)
     .then(r => r.json())
     .then(items => items.map(m => ({ name: m.text, urn: m.id })));
 
-export async function initLMV() {
-  const token = await getToken();
+export async function initializeLmvSdk() {
+  const token = await fetchAccessToken();
+
+  // LMV >= 7.119 enables "Large Model Experience" (HLOD / out-of-core tile
+  // manager) by default. Its geometry streaming stalls when the viewer is
+  // driven manually like we do here (impl.stop() + external tick()), so
+  // geometry never loads and GEOMETRY_LOADED_EVENT never fires.
+  //
+  if (Autodesk.Viewing.FeatureFlags?._setInitializationData) {
+    Autodesk.Viewing.FeatureFlags._setInitializationData(
+      'LARGE_MODEL_EXPERIENCE', { overridePreferenceValue: false }
+    );
+  }
+
   return new Promise(resolve => {
     Autodesk.Viewing.Initializer({
       env: 'AutodeskProduction2',
@@ -20,7 +32,7 @@ export async function initLMV() {
   });
 }
 
-export function bootstrapRendererClass() {
+export function resolveLmvRendererClass() {
   const div = document.createElement('div');
   div.style.cssText = 'position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden';
   document.body.appendChild(div);
@@ -34,11 +46,25 @@ export function bootstrapRendererClass() {
   return RendererClass;
 }
 
-export function createSharedRenderer(RendererClass, canvas) {
+export function createSharedLmvRenderer(RendererClass, canvas) {
   const renderer = new RendererClass({ canvas });
   renderer.autoClear = false;
   renderer.sortObjects = false;
   renderer.refCount = 0;
+
+  // MapLibre clamps the canvas backing store to its maxCanvasSize (4096 by
+  // default) by lowering the *applied* pixel ratio once clientWidth×DPR
+  // exceeds it. So device px ≠ CSS px × devicePixelRatio past that clamp.
+  // Force LMV's pixel ratio to the ratio MapLibre actually applied
+  // (canvas.width / clientWidth), or LMV and MapLibre end up rendering
+  // into different pixel spaces and camera sync breaks. Note: LMV's
+  // setViewport/setSize take CSS px and apply the pixel ratio internally.
+  const deviceRatio = () => (canvas.clientWidth ? canvas.width / canvas.clientWidth : 1) || 1;
+
+  const origSetPixelRatio = renderer.setPixelRatio.bind(renderer);
+  renderer.setPixelRatio = function() {
+    origSetPixelRatio(deviceRatio());
+  };
 
   renderer.setSize = function() {
     renderer.setViewport(0, 0, canvas.clientWidth, canvas.clientHeight);
@@ -51,7 +77,7 @@ export function createSharedRenderer(RendererClass, canvas) {
  * Make LMV's background transparent and enable alpha blending on the
  * final blit (presentBuffer) so MapLibre's map shows through.
  */
-export function patchForTransparency(viewer) {
+export function configureTransparentLmvRendering(viewer) {
   const THREE = window.THREE;
   const rc = viewer.impl.renderer();
   const glr = viewer.impl.glrenderer();
@@ -104,7 +130,7 @@ export function patchForTransparency(viewer) {
   };
 }
 
-export function createViewer(container, glrenderer, mapCanvas) {
+export function createStoppedLmvViewer(container, glrenderer, mapCanvas) {
   const viewer = new Autodesk.Viewing.GuiViewer3D(container);
   viewer.start(null, null, null, null, { glrenderer });
 
@@ -115,24 +141,29 @@ export function createViewer(container, glrenderer, mapCanvas) {
   const h = mapCanvas.clientHeight;
   viewer.impl.resize(w, h, true);
 
-  patchForTransparency(viewer);
+  configureTransparentLmvRendering(viewer);
 
   return viewer;
 }
 
-export function loadModel(viewer, urn) {
+export function loadLmvModel(viewer, urn) {
   return new Promise(resolve => {
     Autodesk.Viewing.Document.load(`urn:${urn}`, doc => {
       const viewable = doc.getRoot().getDefaultGeometry();
-      viewer.loadDocumentNode(doc, viewable);
 
+      // Attach BEFORE loadDocumentNode: MODEL_ADDED_EVENT can fire
+      // synchronously during the call. Note: GEOMETRY_LOADED_EVENT no
+      // longer fires reliably on LMV >= 7.124 when the viewer is driven
+      // manually (impl.stop + external tick), so MODEL_ADDED is our signal.
       viewer.addEventListener(
-        Autodesk.Viewing.GEOMETRY_LOADED_EVENT,
-        function onLoaded() {
-          viewer.removeEventListener(Autodesk.Viewing.GEOMETRY_LOADED_EVENT, onLoaded);
+        Autodesk.Viewing.MODEL_ADDED_EVENT,
+        function onAdded() {
+          viewer.removeEventListener(Autodesk.Viewing.MODEL_ADDED_EVENT, onAdded);
           resolve(viewer);
         }
       );
+
+      viewer.loadDocumentNode(doc, viewable);
     });
   });
 }
